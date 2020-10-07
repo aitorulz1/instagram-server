@@ -8,6 +8,13 @@ const resolvers = {
           return null;
         },
     },
+    Mutation: {
+      register: (_, { input }) => {
+        console.log('Registrando usuarios');
+        console.log(input);
+        return input;
+      },
+    },
 };
 
 module.exports = resolvers;
