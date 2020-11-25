@@ -1,6 +1,20 @@
 const User = require('../models/user')
-const bcrypt = require('bcrypt')
+const bcryptjs = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
+// Token
+function createToken(user, SECRET_KEY, expiresIn){
+  const { id, name, email, username } = user;
+  const payload = {
+    id,
+    name,
+    email,
+    username
+  };
+  return jwt.sign(payload, SECRET_KEY, {expiresIn});
+}
+
+// Register
 async function register(input) {
     const newUser = input;
         
@@ -19,8 +33,8 @@ async function register(input) {
         if(foundUsername) throw new Error('El nombre de usuario ya existe');
 
         // Encriptar 
-        const salt = await bcrypt.genSaltSync(10);
-        newUser.password = await bcrypt.hash(password, salt);
+        const salt = await bcryptjs.genSaltSync(10);
+        newUser.password = await bcryptjs.hash(password, salt);
 
         try {
           const user = new User(newUser);
@@ -31,6 +45,25 @@ async function register(input) {
         }
 }
 
+// Login
+async function login(input) {
+
+  const { email, password } = input;
+
+  const userFound = await User.findOne({email: email.toLowerCase()});
+  if(!userFound) throw new Error('Error en el mail o contraseña');
+
+  const passwordSuccess = await bcryptjs.compare(password, userFound.password);
+  if(!passwordSuccess) throw new Error ('Error en el mail o contraseña');
+
+
+  return {
+    token: createToken(userFound, process.env.SECRET_KEY, "1h"),  
+  };
+
+}
+
 module.exports = {
-    register
+    register,
+    login
 }
